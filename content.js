@@ -1,168 +1,141 @@
-// Listen for messages from popup
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  if (request.action === 'solve') {
-    console.log('Grid Solver: Running solve...');
-    scanAndProcess(sendResponse);
-    return true; // Keep the message channel open for async response
+// Global state
+let gridSolutions = {};
+let activeObserver = null;
+
+// Initialize
+(() => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'solve' || request.action === 'autoSolve') {
+    if (request.action === 'solve') gridSolutions = {};
+    loadSolutions().then(success => sendResponse({ success }));
+    return true;
   }
 });
 
-function scanAndProcess(sendResponse) {
-  // Find all elements with aria-label containing " + "
-  const elements = document.querySelectorAll('[aria-label*=" + "]');
-  const validLabels = [];
-  
-  console.log('Grid Solver: Found elements with " + ":', elements.length);
-  
-  elements.forEach(element => {
-    const label = element.getAttribute('aria-label');
-    console.log('Grid Solver: Checking label:', label);
-    if (label && label.includes(' + ')) {
-      // Clean up extra spaces: replace multiple spaces with single spaces
-      const cleanedLabel = label.replace(/\s+/g, ' ').trim();
-      validLabels.push(cleanedLabel);
-      console.log('Grid Solver: Added valid label:', cleanedLabel);
-    }
-  });
-  
-  if (validLabels.length > 0) {
-    console.log('Grid Solver: Found labels:', validLabels);
-    fetchExternalData(validLabels, sendResponse);
-  } else {
-    // No valid labels found
-    sendResponse({ success: false, error: 'No grid elements found' });
-  }
+function init() {
+  setupClickListener();
+  loadSolutions();
 }
 
-async function fetchExternalData(labels, sendResponse) {
+async function loadSolutions() {
   try {
-    const apiUrl = `http://localhost:3000/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`;
-    console.log('Grid Solver: Fetching from API:', apiUrl);
-    const response = await fetch(apiUrl);
+    const labels = [...document.querySelectorAll('[aria-label*=" + "]')]
+      .map(el => el.getAttribute('aria-label'))
+      .filter(label => label?.includes(' + '))
+      .map(label => label.replace(/\s+/g, ' ').trim());
+    
+    if (!labels.length) return false;
+    
+    const response = await fetch(`http://localhost:3000/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
     const data = await response.json();
     
-    console.log('Grid Solver: API Response:', data);
+    data.suggestions?.forEach(item => {
+      if (item.label) gridSolutions[item.label] = item.suggestions || [];
+    });
     
-    injectDataIntoPage(data);
-    
-    // Send success response back to popup
-    sendResponse({ success: true });
-    
+    return true;
   } catch (error) {
-    console.error('Grid Solver: Error:', error);
-    injectDataIntoPage({ 
-      error: 'Failed to fetch data'
+    console.error('Grid Solver Error:', error);
+    return false;
+  }
+}
+
+function setupClickListener() {
+  document.addEventListener('click', (event) => {
+    const target = event.target.closest('[aria-label*=" + "]');
+    if (target) {
+      injectSolutions(target.getAttribute('aria-label'));
+    } else if (activeObserver && !document.querySelector('[data-headlessui-state="open"]')) {
+      activeObserver.disconnect();
+      activeObserver = null;
+    }
+  });
+}
+
+function injectSolutions(ariaLabel) {
+  activeObserver?.disconnect();
+  activeObserver = null;
+
+  const existingDialog = document.querySelector('[data-headlessui-state="open"]');
+  if (existingDialog && !existingDialog.querySelector('.grid-solver-solutions')) {
+    createSolutionDiv(existingDialog, ariaLabel);
+    return;
+  }
+
+  if (!existingDialog) {
+    activeObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === 1) {
+            const dialog = node.matches?.('[data-headlessui-state="open"]') ? node : 
+                          node.querySelector?.('[data-headlessui-state="open"]');
+            
+            if (dialog && !dialog.querySelector('.grid-solver-solutions')) {
+              createSolutionDiv(dialog, ariaLabel);
+              activeObserver.disconnect();
+              activeObserver = null;
+              return;
+            }
+          }
+        }
+      }
     });
     
-    // Send error response back to popup
-    sendResponse({ success: false, error: error.message });
+    activeObserver.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => {
+      activeObserver?.disconnect();
+      activeObserver = null;
+    }, 3000);
   }
 }
 
-function injectDataIntoPage(data) {
-  // Remove any existing solver content
-  removeInjectedContent();
+function createSolutionDiv(dialog, ariaLabel) {
+  const input = dialog.querySelector('input[placeholder="Search..."], input[aria-autocomplete="list"]');
+  if (!input) return;
+
+  const label = ariaLabel.replace(/\s+/g, ' ').trim();
+  const solutions = gridSolutions[label];
   
-  // Create a container for the solver results
-  const container = document.createElement('div');
-  container.id = 'grid-solver-results';
-  container.style.cssText = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: white;
-    border: 2px solid #4CAF50;
-    border-radius: 8px;
-    padding: 15px;
-    max-width: 300px;
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 10000;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    font-family: Arial, sans-serif;
-    font-size: 14px;
+  const div = document.createElement('div');
+  div.className = 'grid-solver-solutions';
+  div.style.cssText = `
+    background: #374151; color: white; padding: 12px; margin: 0;
+    font: 11px/1.2 ui-monospace, monospace; white-space: pre;
+    max-height: 250px; overflow: auto; border: 1px solid #4B5563;
   `;
   
-  // Create header
-  const header = document.createElement('div');
-  header.style.cssText = `
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #4CAF50;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-  `;
-  header.textContent = 'Grid Solver Results';
-  container.appendChild(header);
+  div.textContent = solutions ? formatTable(solutions, label) : `UTILITY MAN - No data\t"${label}"`;
   
-  // Add close button
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
-  closeBtn.style.cssText = `
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #999;
-  `;
-  closeBtn.onclick = removeInjectedContent;
-  container.appendChild(closeBtn);
-  
-  // Add data content
-  const content = document.createElement('div');
-  content.style.marginTop = '10px';
-  
-  // Handle error cases
-  if (data.error) {
-    content.innerHTML = `<div style="color: #ff4444;">Error: ${data.error}</div>`;
-  } else if (data.suggestions && Array.isArray(data.suggestions)) {
-    console.log('Grid Solver: Processing suggestions:', data.suggestions.length);
-    data.suggestions.forEach(item => {
-      console.log('Grid Solver: Processing item:', item);
-      const itemDiv = document.createElement('pre');
-      itemDiv.style.cssText = 'margin-bottom: 10px; padding: 8px; background: #f9f9f9; border-radius: 4px;';
-      
-      const labelDiv = document.createElement('div');
-      labelDiv.style.cssText = 'font-weight: bold; color: #333; margin-bottom: 5px;';
-      labelDiv.textContent = item.label || 'Unknown Team Combination';
-      itemDiv.appendChild(labelDiv);
-
-      if (item.suggestions && Array.isArray(item.suggestions)) {
-        console.log('Grid Solver: Processing suggestions for', item.label, ':', item.suggestions.length);
-        const pre = document.createElement('pre');
-        pre.style.cssText = 'margin-left: 10px; color: #666;';
-        const lines = [];
-
-        item.suggestions.forEach(suggestionArray => {
-          if (Array.isArray(suggestionArray) && suggestionArray.length >= 3) {
-            const [name, number1, number2] = suggestionArray;
-            lines.push(`• ${name} (${number2}yo) ${number1} TGP`);
-          }
-        });
-
-        pre.textContent = lines.join('\n');
-        itemDiv.appendChild(pre);
-      }
-
-      content.appendChild(itemDiv);
-
-    });
+  const list = dialog.querySelector('ul[role="listbox"], ul');
+  if (list) {
+    list.parentNode.insertBefore(div, list);
   } else {
-    content.innerHTML = '<div style="color: #666;">No suggestions available</div>';
-    console.log('Grid Solver: No valid suggestions found in data:', data);
+    input.parentNode.insertBefore(div, input.nextElementSibling) || input.parentNode.appendChild(div);
   }
-  
-  container.appendChild(content);
-  
-  document.body.appendChild(container);
 }
 
-function removeInjectedContent() {
-  const existing = document.getElementById('grid-solver-results');
-  if (existing) {
-    existing.remove();
-  }
+function formatTable(solutions, label) {
+  if (!solutions?.length) return `UTILITY MAN - 0 results\t"${label}"`;
+  
+  const valid = solutions.filter(s => Array.isArray(s) && s.length >= 3).slice(0, 15);
+  if (!valid.length) return `UTILITY MAN - Invalid data\t"${label}"`;
+  
+  let table = `UTILITY MAN - ${valid.length} results\t"${label}"\n\n`;
+  table += `${'Player'.padEnd(20)} ${'Age'.padEnd(6)} ${'GP'.padEnd(6)}\n`;
+  table += `${'-'.repeat(20)} ${'-'.repeat(6)} ${'-'.repeat(6)}\n`;
+  
+  valid.forEach(([name, gp, age]) => {
+    const displayName = (name || '').substring(0, 18) + (name?.length > 18 ? '..' : '');
+    table += `${displayName.padEnd(20)} ${(age + 'yo').padEnd(6)} ${(gp + ' TGP').padEnd(6)}\n`;
+  });
+  
+  if (solutions.length > 15) table += `\n... and ${solutions.length - 15} more`;
+  return table;
 }
