@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Immaculate Grid Solver",
+  "version": "1.0",
+  "description": "Provides solutions for immaculategrid.com puzzles using Sean Lahman's baseball database.",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.immaculategrid.com/*",
+    "http://localhost:3000/api/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.immaculategrid.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Immaculate Grid Solver"
+  }
+}
