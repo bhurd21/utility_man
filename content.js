@@ -108,7 +108,7 @@ function createSolutionDiv(dialog, ariaLabel) {
   div.style.cssText = `
     background: #374151; color: white; padding: 12px; margin: 0;
     font: 11px/1.2 ui-monospace, monospace;
-    max-height: 250px; overflow: auto; border: 1px solid #4B5563;
+    max-height: 175px; overflow: auto; border: 1px solid #4B5563;
   `;
   
   div.innerHTML = solutions ? formatTable(solutions, label) : createHeaderLine(`UTILITY MAN - Loading...`, `"${label}"`);
@@ -127,19 +127,42 @@ function createHeaderLine(left, right) {
 
 function formatTable(solutions, label) {
   if (!solutions?.length) return createHeaderLine(`UTILITY MAN - 0 results`, `"${label}"`);
-  
-  const valid = solutions.filter(s => Array.isArray(s) && s.length >= 3).slice(0, 15);
+  const valid = solutions.filter(s => Array.isArray(s) && s.length >= 5).slice(0, 15);
   if (!valid.length) return createHeaderLine(`UTILITY MAN - Invalid data`, `"${label}"`);
-  
-  let table = createHeaderLine(`UTILITY MAN - ${valid.length} results`, `"${label}"`) + '<pre style="margin: 0; padding-top: 12px;">\n';
-  table += `${'Player'.padEnd(20)} ${'Age'.padEnd(6)} ${'GP'.padEnd(6)}\n`;
-  table += `${'-'.repeat(20)} ${'-'.repeat(6)} ${'-'.repeat(6)}\n`;
-  
-  valid.forEach(([name, gp, age]) => {
-    const displayName = (name || '').substring(0, 18) + (name?.length > 18 ? '..' : '');
-    table += `${displayName.padEnd(20)} ${(age + 'yo').padEnd(6)} ${(gp + ' TGP').padEnd(6)}\n`;
+  let table = createHeaderLine(`UTILITY MAN - ${valid.length} results`, `"${label}"`) +
+    `<pre style="margin:0; padding-top:12px; font-family:ui-monospace,monospace; font-size:14px; white-space:pre; width:100%; box-sizing:border-box; line-height:1.3;">\n`;
+
+  const spacer = 4; // Space between columns
+  // Header row
+  table += [
+    'Player'.padEnd(20 + spacer),
+    'Pos'.padEnd(4 + spacer),
+    'ProCareer'.padEnd(11 + spacer),
+    'Age'.padEnd(7 + spacer),
+    'LPS'.padEnd(4 + spacer)
+  ].join('') + '\n';
+
+  // Separator row
+  table += [
+    '-'.repeat(20 + spacer),
+    '-'.repeat(4 + spacer),
+    '-'.repeat(11 + spacer),
+    '-'.repeat(7 + spacer),
+    '-'.repeat(4 + spacer)
+  ].join('') + '\n';
+
+  // Data rows
+  valid.forEach(([name, position, pro_career, age, lps, bbrefID]) => {
+    const displayName = (name || '').length > 23 ? (name || '').substring(0, 23) + '..' : (name || '');
+    table += [
+      displayName.padEnd(20 + spacer),
+      (position || '').padEnd(4 + spacer),
+      (pro_career || '').padEnd(11 + spacer),
+      ((age ? age + 'yo' : '')).padEnd(7 + spacer),
+      (lps || '').padEnd(4 + spacer)
+    ].join('') + '\n';
   });
-  
+
   if (solutions.length > 15) table += `\n... and ${solutions.length - 15} more`;
   table += '</pre>';
   return table;
