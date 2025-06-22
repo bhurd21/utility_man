@@ -107,11 +107,11 @@ function createSolutionDiv(dialog, ariaLabel) {
   div.className = 'grid-solver-solutions';
   div.style.cssText = `
     background: #374151; color: white; padding: 12px; margin: 0;
-    font: 11px/1.2 ui-monospace, monospace; white-space: pre;
+    font: 11px/1.2 ui-monospace, monospace;
     max-height: 250px; overflow: auto; border: 1px solid #4B5563;
   `;
   
-  div.textContent = solutions ? formatTable(solutions, label) : `UTILITY MAN - No data\t"${label}"`;
+  div.innerHTML = solutions ? formatTable(solutions, label) : createHeaderLine(`UTILITY MAN - Loading...`, `"${label}"`);
   
   const list = dialog.querySelector('ul[role="listbox"], ul');
   if (list) {
@@ -121,13 +121,17 @@ function createSolutionDiv(dialog, ariaLabel) {
   }
 }
 
+function createHeaderLine(left, right) {
+  return `<div style="display: flex; justify-content: space-between;"><span>${left}</span><span>${right}</span></div>`;
+}
+
 function formatTable(solutions, label) {
-  if (!solutions?.length) return `UTILITY MAN - 0 results\t"${label}"`;
+  if (!solutions?.length) return createHeaderLine(`UTILITY MAN - 0 results`, `"${label}"`);
   
   const valid = solutions.filter(s => Array.isArray(s) && s.length >= 3).slice(0, 15);
-  if (!valid.length) return `UTILITY MAN - Invalid data\t"${label}"`;
+  if (!valid.length) return createHeaderLine(`UTILITY MAN - Invalid data`, `"${label}"`);
   
-  let table = `UTILITY MAN - ${valid.length} results\t"${label}"\n\n`;
+  let table = createHeaderLine(`UTILITY MAN - ${valid.length} results`, `"${label}"`) + '<pre style="margin: 0; padding-top: 12px;">\n';
   table += `${'Player'.padEnd(20)} ${'Age'.padEnd(6)} ${'GP'.padEnd(6)}\n`;
   table += `${'-'.repeat(20)} ${'-'.repeat(6)} ${'-'.repeat(6)}\n`;
   
@@ -137,5 +141,6 @@ function formatTable(solutions, label) {
   });
   
   if (solutions.length > 15) table += `\n... and ${solutions.length - 15} more`;
+  table += '</pre>';
   return table;
 }
