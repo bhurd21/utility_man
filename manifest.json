@@ -8,7 +8,7 @@
   ],
   "host_permissions": [
     "https://www.immaculategrid.com/*",
-    "http://localhost:3000/api/*"
+    "https://hurdb.xyz:3000/api/*"
   ],
   "background": {
     "service_worker": "service-worker.js"

@@ -33,7 +33,7 @@ async function loadSolutions() {
     
     if (!labels.length) return false;
     
-    const response = await fetch(`http://localhost:3000/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
+    const response = await fetch(`https://hurdb.xyz/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
     const data = await response.json();
     
     data.suggestions?.forEach(item => {
@@ -127,8 +127,8 @@ function createHeaderLine(left, right) {
 
 function formatTable(solutions, label) {
   if (!solutions?.length) return createHeaderLine(`UTILITY MAN - 0 results`, `"${label}"`);
-  const valid = solutions.filter(s => Array.isArray(s) && s.length >= 5).slice(0, 15);
-  if (!valid.length) return createHeaderLine(`UTILITY MAN - Invalid data`, `"${label}"`);
+  const valid = solutions.filter(s => s && typeof s === 'object' && s.name).slice(0, 15);
+  if (!valid.length) return createHeaderLine(`UTILITY MAN - No valid data`, `"${label}"`);
   let table = createHeaderLine(`UTILITY MAN - ${valid.length} results`, `"${label}"`) +
     `<pre style="margin:0; padding-top:12px; font-family:ui-monospace,monospace; font-size:14px; white-space:pre; width:100%; box-sizing:border-box; line-height:1.3;">\n`;
 
@@ -152,14 +152,14 @@ function formatTable(solutions, label) {
   ].join('') + '\n';
 
   // Data rows
-  valid.forEach(([name, position, pro_career, age, lps, bbrefID]) => {
-    const displayName = (name || '').length > 23 ? (name || '').substring(0, 23) + '..' : (name || '');
+  valid.forEach((player) => {
+    const displayName = (player.name || '').length > 23 ? (player.name || '').substring(0, 23) + '..' : (player.name || '');
     table += [
       displayName.padEnd(20 + spacer),
-      (position || '').padEnd(4 + spacer),
-      (pro_career || '').padEnd(11 + spacer),
-      ((age ? age + 'yo' : '')).padEnd(7 + spacer),
-      (lps || '').padEnd(4 + spacer)
+      (player.position || '').padEnd(4 + spacer),
+      (player.pro_career || '').padEnd(11 + spacer),
+      ((player.age ? player.age + 'yo' : '')).padEnd(7 + spacer),
+      (player.lps || '').padEnd(4 + spacer)
     ].join('') + '\n';
   });
 
