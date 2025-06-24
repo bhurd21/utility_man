@@ -33,7 +33,7 @@ async function loadSolutions() {
     
     if (!labels.length) return false;
     
-    const response = await fetch(`https://hurdb.xyz/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
+    const response = await fetch(`https://brennanhurd.com/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
     const data = await response.json();
     
     data.suggestions?.forEach(item => {

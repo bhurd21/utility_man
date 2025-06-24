@@ -8,7 +8,7 @@
   ],
   "host_permissions": [
     "https://www.immaculategrid.com/*",
-    "https://hurdb.xyz:3000/api/*"
+    "https://brennanhurd.com/api/*"
   ],
   "background": {
     "service_worker": "service-worker.js"
