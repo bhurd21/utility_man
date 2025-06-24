@@ -137,7 +137,7 @@ function formatTable(solutions, label) {
   table += [
     'Player'.padEnd(20 + spacer),
     'Pos'.padEnd(4 + spacer),
-    'ProCareer'.padEnd(11 + spacer),
+    'Pro Career'.padEnd(11 + spacer),
     'Age'.padEnd(7 + spacer),
     'LPS'.padEnd(4 + spacer)
   ].join('') + '\n';
@@ -159,7 +159,7 @@ function formatTable(solutions, label) {
       (player.position || '').padEnd(4 + spacer),
       (player.pro_career || '').padEnd(11 + spacer),
       ((player.age ? player.age + 'yo' : '')).padEnd(7 + spacer),
-      (player.lps || '').padEnd(4 + spacer)
+      String(player.lps || '').padEnd(4 + spacer)
     ].join('') + '\n';
   });
 
