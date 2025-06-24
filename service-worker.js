@@ -1,7 +1,7 @@
 // Service worker for Immaculate Grid Solver
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // Only trigger when the page has finished loading and matches our pattern
-  if (changeInfo.status === 'complete' && 
+  // Trigger on both complete page loads and URL changes
+  if ((changeInfo.status === 'complete' || changeInfo.url) && 
       tab.url && 
       tab.url.includes('immaculategrid.com')) {
     

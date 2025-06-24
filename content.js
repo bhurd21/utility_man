@@ -1,6 +1,7 @@
 // Global state
 let gridSolutions = {};
 let activeObserver = null;
+let currentUrl = window.location.href;
 
 // Initialize
 (() => {
@@ -21,6 +22,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 function init() {
   setupClickListener();
+  setupUrlChangeDetection();
   loadSolutions();
 }
 
@@ -166,4 +168,34 @@ function formatTable(solutions, label) {
   if (solutions.length > 15) table += `\n... and ${solutions.length - 15} more`;
   table += '</pre>';
   return table;
+}
+
+function setupUrlChangeDetection() {
+  // Override pushState and replaceState to catch programmatic navigation
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+  
+  history.pushState = function(...args) {
+    originalPushState.apply(this, args);
+    handleUrlChange();
+  };
+  
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(this, args);
+    handleUrlChange();
+  };
+  
+  // Check for URL changes periodically
+  setInterval(handleUrlChange, 5000);
+}
+
+function handleUrlChange() {
+  console.log('handleUrlChange');
+  const newUrl = window.location.href;
+  if (newUrl !== currentUrl && 
+      (newUrl.includes('/grid-') || newUrl.endsWith('immaculategrid.com/') || newUrl.endsWith('immaculategrid.com'))) {
+    currentUrl = newUrl;
+    gridSolutions = {};
+    loadSolutions();
+  }
 }
