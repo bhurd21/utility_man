@@ -58,19 +58,19 @@ async function loadSolutions() {
 
 function setupClickListener() {
   document.addEventListener('click', (event) => {
-    if (event.target.classList.contains('grid-toggle-btn') || 
-        event.target.closest('.grid-toggle-btn')) {
+    if (event.target.classList.contains('grid-toggle-btn') || event.target.closest('.grid-toggle-btn')) {
       toggleVisibility(event);
-      return;
-    }
-    
-    const target = event.target.closest('[aria-label*=" + "]');
-    if (target) {
-      isCurrentlyHidden = hideByDefault; // Reset to user preference for new context
-      injectSolutions(target.getAttribute('aria-label'));
-    } else if (activeObserver && !document.querySelector('[data-headlessui-state="open"]')) {
-      activeObserver.disconnect();
-      activeObserver = null;
+    } else if (event.target.classList.contains('grid-copy-btn') || event.target.closest('.grid-copy-btn')) {
+      copyPlayerName(event);
+    } else {
+      const target = event.target.closest('[aria-label*=" + "]');
+      if (target) {
+        isCurrentlyHidden = hideByDefault;
+        injectSolutions(target.getAttribute('aria-label'));
+      } else if (activeObserver && !document.querySelector('[data-headlessui-state="open"]')) {
+        activeObserver?.disconnect();
+        activeObserver = null;
+      }
     }
   }, true);
 }
@@ -130,36 +130,54 @@ function createSolutionDiv(dialog, ariaLabel) {
   updateSolutionContent(div, solutions, label);
   
   const list = dialog.querySelector('ul[role="listbox"], ul');
-  if (list) {
-    list.parentNode.insertBefore(div, list);
-  } else {
-    input.parentNode.insertBefore(div, input.nextElementSibling) || input.parentNode.appendChild(div);
-  }
+  list ? list.parentNode.insertBefore(div, list) : 
+         (input.parentNode.insertBefore(div, input.nextElementSibling) || input.parentNode.appendChild(div));
 }
 
 function updateSolutionContent(div, solutions, label) {
-  if (isCurrentlyHidden) {
-    div.innerHTML = createHiddenState(label);
-  } else {
-    div.innerHTML = solutions ? formatTable(solutions, label) : createHeaderLine(`UTILITY MAN - Loading...`, `${label}`);
-  }
+  div.innerHTML = isCurrentlyHidden ? createHiddenState(label) : 
+    (solutions ? formatTable(solutions, label) : createHeaderLine(`Utility Man - Loading...`, label));
 }
 
 function createHiddenState(label) {
-  return createHeaderLineWithButton(`UTILITY MAN`, `${label}`, true) + 
+  return createHeaderLineWithButton(`Utility Man`, label, true) + 
     `<div style="text-align: center; padding: 20px; color: #9CA3AF;">Solutions hidden - click eye to reveal</div>`;
 }
 
 function toggleVisibility(event) {
   event.stopPropagation();
   event.preventDefault();
-  
   isCurrentlyHidden = !isCurrentlyHidden;
   const div = event.target.closest('.grid-solver-solutions');
   if (div) {
     const label = div.querySelector('.grid-label')?.textContent?.replace(/"/g, '') || '';
-    const solutions = gridSolutions[label];
-    updateSolutionContent(div, solutions, `${label}`);
+    updateSolutionContent(div, gridSolutions[label], label);
+  }
+}
+
+function copyPlayerName(event) {
+  event.stopPropagation();
+  event.preventDefault();
+  const playerName = event.target.getAttribute('data-player-name');
+  if (!playerName) return;
+
+  const input = document.querySelector('[data-headlessui-state="open"]')
+    ?.querySelector('input[placeholder="Search..."], input[aria-autocomplete="list"]');
+  
+  if (input) {
+    input.value = playerName;
+    input.focus();
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    const button = event.target;
+    const originalContent = button.textContent;
+    button.textContent = '✓';
+    button.style.backgroundColor = '#4CAF50';
+    setTimeout(() => {
+      button.textContent = originalContent;
+      button.style.backgroundColor = '#6B7280';
+    }, 1000);
   }
 }
 
@@ -172,7 +190,7 @@ function createHeaderLineWithButton(left, right, isHidden) {
     ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
     : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
   
-  return `<div style="display: flex; justify-content: space-between; align-items: center;">
+  return `<div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
     <span>${left}</span>
     <div style="display: flex; align-items: center; gap: 8px;">
       <button class="grid-toggle-btn" style="background: none; border: none; color: white; cursor: pointer; padding: 2px; display: flex; align-items: center;" title="${isHidden ? 'Show solutions' : 'Hide solutions'}">${eyeIcon}</button>
@@ -182,50 +200,44 @@ function createHeaderLineWithButton(left, right, isHidden) {
 }
 
 function formatTable(solutions, label) {
-  if (!solutions?.length) return createHeaderLineWithButton(`UTILITY MAN - 0 results`, `${label}`, isCurrentlyHidden);
-  const valid = solutions.filter(s => s && typeof s === 'object' && s.name).slice(0, 15);
-  if (!valid.length) return createHeaderLineWithButton(`UTILITY MAN - No valid data`, `${label}`, isCurrentlyHidden);
-  let table = createHeaderLineWithButton(`UTILITY MAN - ${valid.length} results`, `${label}`, isCurrentlyHidden) +
-    `<pre style="margin:0; padding-top:12px; font-family:ui-monospace,monospace; font-size:14px; white-space:pre; width:100%; box-sizing:border-box; line-height:1.3;">\n`;
+  if (!solutions?.length) return createHeaderLineWithButton(`Utility Man - 0 results`, label, isCurrentlyHidden);
+  const valid = solutions.filter(s => s?.name).slice(0, 15);
+  if (!valid.length) return createHeaderLineWithButton(`Utility Man - No valid data`, label, isCurrentlyHidden);
+  
+  let table = createHeaderLineWithButton(`Utility Man - ${valid.length} results`, label, isCurrentlyHidden) +
+    `<div style="font-family: ui-monospace, monospace; font-size: 14px; margin-top: 12px;">
+    <div style="color: #9CA3AF; margin-bottom: 8px; display: flex;">
+      <span style="width: 3%;"></span>
+      <span style="width: 32%;">Player</span>
+      <span style="width: 20%;">Pro Career</span>
+      <span style="width: 10%;">Pos</span>
+      <span style="width: 14%;">Age</span>
+      <span style="width: 11%;">BRef</span>
+      <span style="width: 10%;">LPS</span>
+    </div>`;
 
-  const spacer = 4; // Space between columns
-  // Header row
-  table += [
-    'Player'.padEnd(20 + spacer),
-    'Pos'.padEnd(4 + spacer),
-    'Pro Career'.padEnd(11 + spacer),
-    'Age'.padEnd(7 + spacer),
-    'LPS'.padEnd(4 + spacer)
-  ].join('') + '\n';
-
-  // Separator row
-  table += [
-    '-'.repeat(20 + spacer),
-    '-'.repeat(4 + spacer),
-    '-'.repeat(11 + spacer),
-    '-'.repeat(7 + spacer),
-    '-'.repeat(4 + spacer)
-  ].join('') + '\n';
-
-  // Data rows
-  valid.forEach((player) => {
-    const displayName = (player.name || '').length > 23 ? (player.name || '').substring(0, 23) + '..' : (player.name || '');
-    table += [
-      displayName.padEnd(20 + spacer),
-      (player.position || '').padEnd(4 + spacer),
-      (player.pro_career || '').padEnd(11 + spacer),
-      ((player.age ? player.age + 'yo' : '')).padEnd(7 + spacer),
-      String(player.lps || '').padEnd(4 + spacer)
-    ].join('') + '\n';
+  valid.forEach((player, index) => {
+    const displayName = player.name.length > 20 ? player.name.substring(0, 20) + '..' : player.name;
+    const rowBg = index % 2 ? '#4B5563' : 'transparent';
+    table += `<div style="display: flex; align-items: center; margin-bottom: 2px; background-color: ${rowBg};">
+      <div style="width: 16px; height: 16px; display: flex; align-items: center; justify-content: left; margin-right: 4px;">
+        <button class="grid-copy-btn" data-player-name="${player.name}" style="width: 75%; height: 75%; background: #6B7280; border: 1px solid #9CA3AF; color: white; cursor: pointer; font-size: 10px;"></button>
+      </div>
+      <span style="width: 32%; cursor: default;">${displayName}</span>
+      <span style="width: 20%; cursor: default;">${player.pro_career || ''}</span>
+      <span style="width: 10%; cursor: default;">${player.position || ''}</span>
+      <span style="width: 14%; cursor: default;">${player.age ? player.age + 'yo' : ''}</span>
+      <span style="width: 11%; cursor: default;">${player.bbref_id ? `<a href="https://www.baseball-reference.com/players/${player.bbref_id[0]}/${player.bbref_id}.shtml" target="_blank" style="color: #60A5FA; cursor: pointer; text-decoration: none;">🔗</a>` : ''}</span>
+      <span style="width: 10%; cursor: default;">${player.lps || ''}</span>
+    </div>`;
   });
 
-  if (solutions.length > 15) table += `\n... and ${solutions.length - 15} more`;
-  table += '</pre>';
+  table += '</div>';
+  if (solutions.length > 15) table += `<div style="font-family: ui-monospace, monospace; font-size: 12px; color: #9CA3AF; margin-top: 8px;">... and ${solutions.length - 15} more</div>`;
   return table;
 }
 
 function setupUrlChangeDetection() {
-  // Override pushState and replaceState to catch programmatic navigation
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
   
@@ -239,12 +251,10 @@ function setupUrlChangeDetection() {
     handleUrlChange();
   };
   
-  // Check for URL changes periodically
   setInterval(handleUrlChange, 5000);
 }
 
 function handleUrlChange() {
-  console.log('handleUrlChange');
   const newUrl = window.location.href;
   if (newUrl !== currentUrl && 
       (newUrl.includes('/grid-') || newUrl.endsWith('immaculategrid.com/') || newUrl.endsWith('immaculategrid.com'))) {
@@ -259,7 +269,6 @@ async function loadUserPreferences() {
     const result = await chrome.storage.local.get(['hideByDefault']);
     hideByDefault = result.hideByDefault || false;
   } catch (error) {
-    console.error('Failed to load user preferences:', error);
     hideByDefault = false;
   }
 }
