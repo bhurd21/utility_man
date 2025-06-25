@@ -4,7 +4,8 @@
   "version": "1.0",
   "description": "Provides solutions for immaculategrid.com puzzles using Sean Lahman's baseball database.",
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage"
   ],
   "host_permissions": [
     "https://www.immaculategrid.com/*",

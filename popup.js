@@ -3,9 +3,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const status = document.getElementById('status');
   const statusText = document.getElementById('statusText');
   const indicator = document.getElementById('indicator');
+  const hideByDefaultToggle = document.getElementById('hideByDefault');
 
-  // Check initial status
+  // Check initial status and load preferences
   checkExtensionStatus();
+  loadPreferences();
 
   refreshBtn.addEventListener('click', function() {
     statusText.textContent = 'Refreshing...';
@@ -47,6 +49,28 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+  // Handle preference toggle
+  hideByDefaultToggle.addEventListener('change', function() {
+    const hideByDefault = hideByDefaultToggle.checked;
+    chrome.storage.local.set({ hideByDefault }, function() {
+      // Notify content script of preference change
+      chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+        if (tabs[0] && tabs[0].url && tabs[0].url.includes('immaculategrid.com')) {
+          chrome.tabs.sendMessage(tabs[0].id, { 
+            action: 'updatePreference',
+            hideByDefault: hideByDefault
+          });
+        }
+      });
+    });
+  });
+
+  function loadPreferences() {
+    chrome.storage.local.get(['hideByDefault'], function(result) {
+      hideByDefaultToggle.checked = result.hideByDefault || false;
+    });
+  }
 
   function checkExtensionStatus() {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
