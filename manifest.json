@@ -17,12 +17,17 @@
   "content_scripts": [
     {
       "matches": ["https://www.immaculategrid.com/*"],
-      "js": ["content.js"],
+      "js": [
+        "dom-helpers.js",
+        "ui-components.js", 
+        "content-formatter.js",
+        "content.js"
+      ],
       "run_at": "document_end"
     }
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Immaculate Grid Solver"
+    "default_title": "Utility Man"
   }
 }

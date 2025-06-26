@@ -1,7 +1,7 @@
-# Immaculate Grid Solver Extension
+# Utility Man Extension
 
-Queries SeanLahman's baseball database to solve immaculate grid puzzles.
+Queries Sean Lahman's baseball database to solve immaculate grid puzzles.
 
-# Sources
-https://www.immaculategrid.com
-http://seanlahman.com
+## Important Links
+- https://www.immaculategrid.com
+- http://seanlahman.com

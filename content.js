@@ -5,7 +5,7 @@ let currentUrl = window.location.href;
 let hideByDefault = false;
 let isCurrentlyHidden = false;
 
-// Initialize
+// Initialize on page load
 (() => {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
@@ -14,6 +14,7 @@ let isCurrentlyHidden = false;
   }
 })();
 
+// Handle messages from popup and service worker
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'solve' || request.action === 'autoSolve') {
     if (request.action === 'solve') gridSolutions = {};
@@ -26,25 +27,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+/**
+ * Initialize the extension
+ */
 function init() {
-  setupClickListener();
+  setupEventListeners();
   setupUrlChangeDetection();
   loadUserPreferences();
   loadSolutions();
 }
 
+/**
+ * Load solutions from API
+ */
 async function loadSolutions() {
   try {
-    const labels = [...document.querySelectorAll('[aria-label*=" + "]')]
-      .map(el => el.getAttribute('aria-label'))
-      .filter(label => label?.includes(' + '))
-      .map(label => label.replace(/\s+/g, ' ').trim());
-    
-    if (!labels.length) return false;
+    const labels = GridSolverDOM.extractAriaLabels();
+    if (!labels.length) {
+      // No grid elements found yet - this is normal, not an error
+      console.log('Grid Solver: No grid elements found yet');
+      return true; // Return true since this isn't an error condition
+    }
     
     const response = await fetch(`https://brennanhurd.com/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
     const data = await response.json();
     
+    // Store solutions
     data.suggestions?.forEach(item => {
       if (item.label) gridSolutions[item.label] = item.suggestions || [];
     });
@@ -56,36 +64,96 @@ async function loadSolutions() {
   }
 }
 
-function setupClickListener() {
-  document.addEventListener('click', (event) => {
-    if (event.target.classList.contains('grid-toggle-btn') || event.target.closest('.grid-toggle-btn')) {
-      toggleVisibility(event);
-    } else if (event.target.classList.contains('grid-copy-btn') || event.target.closest('.grid-copy-btn')) {
-      copyPlayerName(event);
-    } else {
-      const target = event.target.closest('[aria-label*=" + "]');
-      if (target) {
-        isCurrentlyHidden = hideByDefault;
-        injectSolutions(target.getAttribute('aria-label'));
-      } else if (activeObserver && !document.querySelector('[data-headlessui-state="open"]')) {
-        activeObserver?.disconnect();
-        activeObserver = null;
-      }
-    }
-  }, true);
+/**
+ * Setup all event listeners
+ */
+function setupEventListeners() {
+  document.addEventListener('click', handleAllClicks, true);
 }
 
-function injectSolutions(ariaLabel) {
-  activeObserver?.disconnect();
-  activeObserver = null;
+/**
+ * Handle all click events in one place
+ */
+function handleAllClicks(event) {
+  // Handle visibility toggle
+  if (event.target.classList.contains('grid-toggle-btn') || event.target.closest('.grid-toggle-btn')) {
+    handleToggleVisibility(event);
+    return;
+  }
+  
+  // Handle copy player name
+  if (event.target.classList.contains('grid-copy-btn') || event.target.closest('.grid-copy-btn')) {
+    handleCopyPlayer(event);
+    return;
+  }
+  
+  // Handle grid cell click
+  const gridCell = event.target.closest('[aria-label*=" + "]');
+  if (gridCell) {
+    isCurrentlyHidden = hideByDefault;
+    injectSolutions(gridCell.getAttribute('aria-label'));
+    return;
+  }
+  
+  // Handle dialog cleanup
+  if (activeObserver && !GridSolverDOM.findOpenDialog()) {
+    cleanupObserver();
+  }
+}
 
-  const existingDialog = document.querySelector('[data-headlessui-state="open"]');
+/**
+ * Handle visibility toggle clicks
+ */
+function handleToggleVisibility(event) {
+  event.stopPropagation();
+  event.preventDefault();
+  isCurrentlyHidden = !isCurrentlyHidden;
+  
+  const div = event.target.closest('.grid-solver-solutions');
+  if (div) {
+    const label = div.querySelector('.grid-label')?.textContent?.replace(/"/g, '') || '';
+    updateSolutionContent(div, gridSolutions[label], label);
+  }
+}
+
+/**
+ * Handle copy player name clicks
+ */
+function handleCopyPlayer(event) {
+  event.stopPropagation();
+  event.preventDefault();
+  
+  const playerName = event.target.getAttribute('data-player-name');
+  if (!playerName) return;
+
+  GridSolverDOM.fillSearchInput(playerName);
+  
+  // Visual feedback
+  const button = event.target;
+  const originalContent = button.textContent;
+  button.textContent = '✓';
+  button.style.backgroundColor = '#4CAF50';
+  
+  setTimeout(() => {
+    button.textContent = originalContent;
+    button.style.backgroundColor = '#6B7280';
+  }, 1000);
+}
+
+/**
+ * Inject solutions into dialog
+ */
+function injectSolutions(ariaLabel) {
+  cleanupObserver();
+
+  const existingDialog = GridSolverDOM.findOpenDialog();
   if (existingDialog && !existingDialog.querySelector('.grid-solver-solutions')) {
-    createSolutionDiv(existingDialog, ariaLabel);
+    createAndInsertSolution(existingDialog, ariaLabel);
     return;
   }
 
   if (!existingDialog) {
+    // Wait for dialog to appear
     activeObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
@@ -94,9 +162,8 @@ function injectSolutions(ariaLabel) {
                           node.querySelector?.('[data-headlessui-state="open"]');
             
             if (dialog && !dialog.querySelector('.grid-solver-solutions')) {
-              createSolutionDiv(dialog, ariaLabel);
-              activeObserver.disconnect();
-              activeObserver = null;
+              createAndInsertSolution(dialog, ariaLabel);
+              cleanupObserver();
               return;
             }
           }
@@ -105,138 +172,48 @@ function injectSolutions(ariaLabel) {
     });
     
     activeObserver.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => {
-      activeObserver?.disconnect();
-      activeObserver = null;
-    }, 3000);
+    setTimeout(cleanupObserver, 3000);
   }
 }
 
-function createSolutionDiv(dialog, ariaLabel) {
-  const input = dialog.querySelector('input[placeholder="Search..."], input[aria-autocomplete="list"]');
-  if (!input) return;
+/**
+ * Create and insert solution div
+ */
+function createAndInsertSolution(dialog, ariaLabel) {
+  if (!GridSolverDOM.findSearchInput(dialog)) return;
 
   const label = ariaLabel.replace(/\s+/g, ' ').trim();
   const solutions = gridSolutions[label];
   
-  const div = document.createElement('div');
-  div.className = 'grid-solver-solutions';
-  div.style.cssText = `
-    background: #374151; color: white; padding: 12px; margin: 0;
-    font: 11px/1.2 ui-monospace, monospace;
-    max-height: 175px; overflow: auto; border: 1px solid #4B5563;
-  `;
-  
+  const div = GridSolverDOM.createSolutionContainer();
   updateSolutionContent(div, solutions, label);
-  
-  const list = dialog.querySelector('ul[role="listbox"], ul');
-  list ? list.parentNode.insertBefore(div, list) : 
-         (input.parentNode.insertBefore(div, input.nextElementSibling) || input.parentNode.appendChild(div));
+  GridSolverDOM.insertSolutionDiv(dialog, div);
 }
 
+/**
+ * Update solution content based on visibility state
+ */
 function updateSolutionContent(div, solutions, label) {
-  div.innerHTML = isCurrentlyHidden ? createHiddenState(label) : 
-    (solutions ? formatTable(solutions, label) : createHeaderLine(`Utility Man - Loading...`, label));
-}
-
-function createHiddenState(label) {
-  return createHeaderLineWithButton(`Utility Man`, label, true) + 
-    `<div style="text-align: center; padding: 20px; color: #9CA3AF;">Solutions hidden - click eye to reveal</div>`;
-}
-
-function toggleVisibility(event) {
-  event.stopPropagation();
-  event.preventDefault();
-  isCurrentlyHidden = !isCurrentlyHidden;
-  const div = event.target.closest('.grid-solver-solutions');
-  if (div) {
-    const label = div.querySelector('.grid-label')?.textContent?.replace(/"/g, '') || '';
-    updateSolutionContent(div, gridSolutions[label], label);
+  if (isCurrentlyHidden) {
+    div.innerHTML = GridSolverFormatter.formatHiddenState(label);
+  } else if (solutions) {
+    div.innerHTML = GridSolverFormatter.formatSolutionsTable(solutions, label, isCurrentlyHidden);
+  } else {
+    div.innerHTML = GridSolverFormatter.formatLoadingState(label);
   }
 }
 
-function copyPlayerName(event) {
-  event.stopPropagation();
-  event.preventDefault();
-  const playerName = event.target.getAttribute('data-player-name');
-  if (!playerName) return;
-
-  const input = document.querySelector('[data-headlessui-state="open"]')
-    ?.querySelector('input[placeholder="Search..."], input[aria-autocomplete="list"]');
-  
-  if (input) {
-    input.value = playerName;
-    input.focus();
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    
-    const button = event.target;
-    const originalContent = button.textContent;
-    button.textContent = '✓';
-    button.style.backgroundColor = '#4CAF50';
-    setTimeout(() => {
-      button.textContent = originalContent;
-      button.style.backgroundColor = '#6B7280';
-    }, 1000);
-  }
+/**
+ * Cleanup mutation observer
+ */
+function cleanupObserver() {
+  activeObserver?.disconnect();
+  activeObserver = null;
 }
 
-function createHeaderLine(left, right) {
-  return `<div style="display: flex; justify-content: space-between;"><span>${left}</span><span class="grid-label">${right}</span></div>`;
-}
-
-function createHeaderLineWithButton(left, right, isHidden) {
-  const eyeIcon = isHidden 
-    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
-    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-  
-  return `<div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-    <span>${left}</span>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <button class="grid-toggle-btn" style="background: none; border: none; color: white; cursor: pointer; padding: 2px; display: flex; align-items: center;" title="${isHidden ? 'Show solutions' : 'Hide solutions'}">${eyeIcon}</button>
-      <span class="grid-label">${right}</span>
-    </div>
-  </div>`;
-}
-
-function formatTable(solutions, label) {
-  if (!solutions?.length) return createHeaderLineWithButton(`Utility Man - 0 results`, label, isCurrentlyHidden);
-  const valid = solutions.filter(s => s?.name).slice(0, 15);
-  if (!valid.length) return createHeaderLineWithButton(`Utility Man - No valid data`, label, isCurrentlyHidden);
-  
-  let table = createHeaderLineWithButton(`Utility Man - ${valid.length} results`, label, isCurrentlyHidden) +
-    `<div style="font-family: ui-monospace, monospace; font-size: 14px; margin-top: 12px;">
-    <div style="color: #9CA3AF; margin-bottom: 8px; display: flex;">
-      <span style="width: 3%;"></span>
-      <span style="width: 32%;">Player</span>
-      <span style="width: 20%;">Pro Career</span>
-      <span style="width: 10%;">Pos</span>
-      <span style="width: 14%;">Age</span>
-      <span style="width: 11%;">BRef</span>
-      <span style="width: 10%;">LPS</span>
-    </div>`;
-
-  valid.forEach((player, index) => {
-    const displayName = player.name.length > 20 ? player.name.substring(0, 20) + '..' : player.name;
-    const rowBg = index % 2 ? '#4B5563' : 'transparent';
-    table += `<div style="display: flex; align-items: center; margin-bottom: 2px; background-color: ${rowBg};">
-      <div style="width: 16px; height: 16px; display: flex; align-items: center; justify-content: left; margin-right: 4px;">
-        <button class="grid-copy-btn" data-player-name="${player.name}" style="width: 75%; height: 75%; background: #6B7280; border: 1px solid #9CA3AF; color: white; cursor: pointer; font-size: 10px;"></button>
-      </div>
-      <span style="width: 32%; cursor: default;">${displayName}</span>
-      <span style="width: 20%; cursor: default;">${player.pro_career || ''}</span>
-      <span style="width: 10%; cursor: default;">${player.position || ''}</span>
-      <span style="width: 14%; cursor: default;">${player.age ? player.age + 'yo' : ''}</span>
-      <span style="width: 11%; cursor: default;">${player.bbref_id ? `<a href="https://www.baseball-reference.com/players/${player.bbref_id[0]}/${player.bbref_id}.shtml" target="_blank" style="color: #60A5FA; cursor: pointer; text-decoration: none;">🔗</a>` : ''}</span>
-      <span style="width: 10%; cursor: default;">${player.lps || ''}</span>
-    </div>`;
-  });
-
-  table += '</div>';
-  if (solutions.length > 15) table += `<div style="font-family: ui-monospace, monospace; font-size: 12px; color: #9CA3AF; margin-top: 8px;">... and ${solutions.length - 15} more</div>`;
-  return table;
-}
-
+/**
+ * Setup URL change detection for navigation
+ */
 function setupUrlChangeDetection() {
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
@@ -254,6 +231,9 @@ function setupUrlChangeDetection() {
   setInterval(handleUrlChange, 5000);
 }
 
+/**
+ * Handle URL changes
+ */
 function handleUrlChange() {
   const newUrl = window.location.href;
   if (newUrl !== currentUrl && 
@@ -264,6 +244,9 @@ function handleUrlChange() {
   }
 }
 
+/**
+ * Load user preferences
+ */
 async function loadUserPreferences() {
   try {
     const result = await chrome.storage.local.get(['hideByDefault']);

@@ -26,7 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
           refreshBtn.disabled = false;
           refreshBtn.textContent = 'Refresh';
           
-          if (response && response.success) {
+          if (chrome.runtime.lastError) {
+            // Handle Chrome extension errors
+            statusText.textContent = 'Error';
+            indicator.className = 'status-indicator error';
+            status.textContent = 'Extension not loaded on this page. Refresh the page and try again.';
+          } else if (response && response.success) {
             statusText.textContent = 'Ready';
             indicator.className = 'status-indicator ready';
             status.textContent = 'Solutions updated! Click grid cells to see answers.';
@@ -40,12 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
             status.textContent = 'Failed to refresh. Try again.';
           }
         });
-      } else {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = 'Refresh';
-        statusText.textContent = 'Error';
-        indicator.className = 'status-indicator error';
-        status.textContent = 'Please navigate to immaculategrid.com first';
       }
     });
   });
@@ -83,9 +82,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Not on the target site
         statusText.textContent = 'Inactive';
         indicator.className = 'status-indicator error';
-        status.textContent = 'Navigate to immaculategrid.com to use the solver';
-        refreshBtn.disabled = true;
-        refreshBtn.textContent = 'Navigate to Grid Site';
+        status.textContent = 'Navigate to immaculate grid to use the solver';
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = 'immaculategrid.com';
+        refreshBtn.onclick = function() {
+          chrome.tabs.create({ url: 'https://immaculategrid.com' });
+        };
       }
     });
   }
