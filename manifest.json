@@ -2,6 +2,9 @@
   "manifest_version": 3,
   "name": "Utility Man",
   "version": "1.0",
+  "icons": {
+    "128": "icon128.png"
+  },
   "description": "Provides solutions for immaculategrid.com puzzles using Sean Lahman's baseball database.",
   "permissions": [
     "activeTab",
