@@ -4,6 +4,7 @@ let activeObserver = null;
 let currentUrl = window.location.href;
 let hideByDefault = false;
 let isCurrentlyHidden = false;
+let lastLoadTime = 0;
 
 // Initialize on page load
 (() => {
@@ -42,11 +43,18 @@ function init() {
  */
 async function loadSolutions() {
   try {
+    // Debounce rapid calls - ignore if called within 500ms
+    const now = Date.now();
+    if (now - lastLoadTime < 750) {
+      console.log('Grid Solver: Skipping duplicate loadSolutions call');
+      return true;
+    }
+    lastLoadTime = now;
+    
     const labels = GridSolverDOM.extractAriaLabels();
     if (!labels.length) {
-      // No grid elements found yet - this is normal, not an error
       console.log('Grid Solver: No grid elements found yet');
-      return true; // Return true since this isn't an error condition
+      return true;
     }
     
     const response = await fetch(`https://brennanhurd.com/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
