@@ -1,202 +1,294 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body {
-      width: 320px;
-      padding: 0;
-      margin: 0;
-      background: #374151;
-      color: white;
-      font-family: ui-monospace, monospace;
-      font-size: 12px;
-      line-height: 1.2;
-    }
-    .header {
-      padding: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #1f2937;
-      margin-bottom: 0;
-    }
-    .header-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-    }
-    .title-version-container {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-    .header-title h3 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: bold;
-      color: white;
-    }
-    .version {
-      font-size: 10px;
-      color: #9CA3AF;
-    }
-    .status-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 8px;
-    }
-    .status-indicator.loading {
-      background-color: #ffa500;
-      animation: pulse 1.5s infinite;
-    }
-    .status-indicator.ready {
-      background-color: #4CAF50;
-    }
-    .status-indicator.error {
-      background-color: #f44336;
-    }
-    .status-container {
-      display: flex;
-      align-items: center;
-      font-size: 12px;
-    }
-    .content-section {
-      padding: 6px;
-    }
-    button {
-      width: 50%;
-      padding: 8px 12px;
-      margin: 8px auto;
-      display: block;
-      border: 1px solid #6B7280;
-      border-radius: 4px;
-      cursor: pointer;
-      background-color: #6B7280;
-      color: white;
-      font-size: 12px;
-      font-family: ui-monospace, monospace;
-      transition: background-color 0.2s;
-    }
-    button:hover {
-      background-color: #4B5563;
-    }
-    button:disabled {
-      background-color: #374151;
-      border-color: #4B5563;
-      color: #9CA3AF;
-      cursor: not-allowed;
-    }
-    button:disabled:hover {
-      background-color: #374151;
-    }
-    #status {
-      margin: 8px 0;
-      font-size: 11px;
-      color: #9CA3AF;
-      text-align: center;
-      line-height: 1.4;
-    }
-    .instructions {
-      font-size: 10px;
-      color: #9CA3AF;
-      margin: 12px 0;
-      padding: 8px;
-      background-color: #1f2937;
-      border-radius: 4px;
-      border: 1px solid #374151;
-      line-height: 1.3;
-    }
-    .instructions strong {
-      color: white;
-    }
-    .preference-section {
-      margin: 12px 0;
-      padding: 8px;
-      background-color: #1f2937;
-      border-radius: 4px;
-      border: 1px solid #374151;
-    }
-    .toggle-container {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      font-size: 11px;
-      color: #9CA3AF;
-    }
-    .toggle-container input[type="checkbox"] {
-      display: none;
-    }
-    .toggle-slider {
-      width: 32px;
-      height: 18px;
-      background-color: #4B5563;
-      border-radius: 18px;
-      margin-right: 8px;
-      position: relative;
-      transition: background-color 0.3s;
-    }
-    .toggle-slider::before {
-      content: '';
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background-color: white;
-      top: 2px;
-      left: 2px;
-      transition: transform 0.3s;
-    }
-    .toggle-container input[type="checkbox"]:checked + .toggle-slider {
-      background-color: #4CAF50;
-    }
-    .toggle-container input[type="checkbox"]:checked + .toggle-slider::before {
-      transform: translateX(14px);
-    }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-title">
-      <div class="title-version-container">
-        <h3>Utility Man</h3>
-        <span class="version">v1.0</span>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --bg-primary: #374151;
+        --bg-secondary: #1f2937;
+        --text-primary: #ffffff;
+        --text-secondary: #9ca3af;
+        --border-color: #374151;
+        --button-bg: #6b7280;
+        --button-hover: #4b5563;
+        --accent-color: #4caf50;
+        --error-color: #f44336;
+        --warning-color: #ffa500;
+      }
+
+      [data-theme="light"] {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9fafb;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border-color: #e5e7eb;
+        --button-bg: #d1d5db;
+        --button-hover: #9ca3af;
+        --accent-color: #059669;
+        --error-color: #dc2626;
+        --warning-color: #d97706;
+      }
+
+      body {
+        width: 320px;
+        padding: 0;
+        margin: 0;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        line-height: 1.2;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .header {
+        padding: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 0;
+      }
+      .header-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .title-version-container {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .header-title h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: bold;
+        color: var(--text-primary);
+      }
+      .version {
+        font-size: 10px;
+        color: var(--text-secondary);
+      }
+      .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+      .status-indicator.loading {
+        background-color: var(--warning-color);
+        animation: pulse 1.5s infinite;
+      }
+      .status-indicator.ready {
+        background-color: var(--accent-color);
+      }
+      .status-indicator.error {
+        background-color: var(--error-color);
+      }
+      .status-container {
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+      }
+      .content-section {
+        padding: 6px;
+      }
+      button {
+        width: 50%;
+        padding: 8px 12px;
+        margin: 8px auto;
+        display: block;
+        border: 1px solid var(--button-bg);
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: var(--button-bg);
+        color: var(--text-primary);
+        font-size: 12px;
+        font-family: ui-monospace, monospace;
+        transition: background-color 0.2s;
+      }
+      button:hover {
+        background-color: var(--button-hover);
+      }
+      button:disabled {
+        background-color: var(--bg-primary);
+        border-color: var(--button-hover);
+        color: var(--text-secondary);
+        cursor: not-allowed;
+      }
+      button:disabled:hover {
+        background-color: var(--bg-primary);
+      }
+      #status {
+        margin: 8px 0;
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-align: center;
+        line-height: 1.4;
+      }
+      .instructions {
+        font-size: 10px;
+        color: var(--text-secondary);
+        margin: 12px 0;
+        padding: 8px;
+        background-color: var(--bg-secondary);
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        line-height: 1.3;
+      }
+      .instructions strong {
+        color: var(--text-primary);
+      }
+      .preference-section {
+        margin: 12px 0;
+        padding: 8px;
+        background-color: var(--bg-secondary);
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+      }
+      .toggle-container {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+      .toggle-container input[type="checkbox"] {
+        display: none;
+      }
+      .toggle-slider {
+        width: 32px;
+        height: 18px;
+        background-color: var(--button-hover);
+        border-radius: 18px;
+        margin-right: 8px;
+        position: relative;
+        transition: background-color 0.3s;
+      }
+      .toggle-slider::before {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: white;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+      }
+      .toggle-container input[type="checkbox"]:checked + .toggle-slider {
+        background-color: var(--accent-color);
+      }
+      .toggle-container
+        input[type="checkbox"]:checked
+        + .toggle-slider::before {
+        transform: translateX(14px);
+      }
+      .theme-selector {
+        display: flex;
+        gap: 8px;
+      }
+      .theme-option {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 10px;
+        color: var(--text-secondary);
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--button-hover);
+        transition: all 0.2s;
+      }
+      .theme-option:hover {
+        background-color: var(--button-hover);
+      }
+      .theme-option input[type="radio"] {
+        display: none;
+      }
+      .theme-option input[type="radio"]:checked + span {
+        color: white;
+        font-weight: bold;
+      }
+      .theme-option:has(input[type="radio"]:checked) {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-title">
+        <div class="title-version-container">
+          <h3>Utility Man</h3>
+          <span class="version">v1.1.0</span>
+        </div>
+        <div class="status-container">
+          <span class="status-indicator loading" id="indicator"></span>
+          <span id="statusText">Loading...</span>
+        </div>
       </div>
-      <div class="status-container">
-        <span class="status-indicator loading" id="indicator"></span>
-        <span id="statusText">Loading...</span>
+    </div>
+
+    <div class="content-section">
+      <button id="refreshBtn">Refresh</button>
+
+      <div id="status">
+        Solutions load automatically when you visit the grid page
+      </div>
+
+      <div class="preference-section">
+        <label class="toggle-container">
+          <input type="checkbox" id="hideByDefault" />
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Hide Answers by Default</span>
+        </label>
+      </div>
+
+      <div class="preference-section">
+        <div
+          style="
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+          "
+        >
+          Theme:
+        </div>
+        <div class="theme-selector">
+          <label class="theme-option">
+            <input type="radio" name="theme" value="system" id="themeSystem" />
+            <span>System</span>
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="light" id="themeLight" />
+            <span>Light</span>
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="dark" id="themeDark" />
+            <span>Dark</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="instructions">
+        <strong>How to use:</strong><br />
+        1. Navigate to immaculategrid.com<br />
+        2. Click any grid cell<br />
+        3. Solutions appear below search bar<br />
+        4. Click the checkbox to autofill the search bar<br />
+        5. Click the 'select' button to submit
       </div>
     </div>
-  </div>
-  
-  <div class="content-section">
-    <button id="refreshBtn">Refresh</button>
-    
-    <div id="status">Solutions load automatically when you visit the grid page</div>
-    
-    <div class="preference-section">
-      <label class="toggle-container">
-        <input type="checkbox" id="hideByDefault">
-        <span class="toggle-slider"></span>
-        <span class="toggle-text">Hide Answers by Default</span>
-      </label>
-    </div>
-    
-    <div class="instructions">
-      <strong>How to use:</strong><br>
-      1. Navigate to immaculategrid.com<br>
-      2. Click any grid cell<br>
-      3. Solutions appear below search bar<br>
-      4. Click the checkbox to autofill the search bar<br>
-      5. Click the 'select' button to submit
-    </div>
-  </div>
-  
-  <script src="popup.js"></script>
-</body>
+
+    <script src="popup.js"></script>
+  </body>
 </html>

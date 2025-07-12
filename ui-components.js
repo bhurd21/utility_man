@@ -17,19 +17,20 @@ window.GridSolverUI = {
    */
   createHeader(leftText, rightText, options = {}) {
     const { showToggle = false, isHidden = false } = options;
+    const colors = GridSolverTheme.getColors();
     
     // Extract result count from leftText for new two-line format
-    const resultMatch = leftText.match(/(\d+) results?|Loading\.\.\.|No valid data/);
+    const resultMatch = leftText.match(/(\d+) results?|Loading\.\.\.|No valid data|Unsolvable/);
     const resultCount = resultMatch ? resultMatch[0] : '';
     
     if (!showToggle) {
       // Simple two-line format without toggle
-      return `<div style="position: sticky; top: 0; background: #374151; z-index: 10; padding-top: 12px; padding-bottom: 4px;">
+      return `<div style="position: sticky; top: 0; background: ${colors.background}; z-index: 10; padding-top: 12px; padding-bottom: 4px;">
         <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-          <span style="font-size: 16px; font-weight: bold;">Utility Man</span>
-          <span style="font-size: 10px; color: #9CA3AF;">v1.0</span>
+          <span style="font-size: 16px; font-weight: bold; color: ${colors.text};">Utility Man</span>
+          <span style="font-size: 10px; color: ${colors.textSecondary};">v1.1.0</span>
         </div>
-        <div style="display: flex; justify-content: space-between;">
+        <div style="display: flex; justify-content: space-between; color: ${colors.text};">
           <span class="grid-label">"${rightText}"</span>
           <span>${resultCount}</span>
         </div>
@@ -39,17 +40,17 @@ window.GridSolverUI = {
     // Two-line format with toggle
     const eyeIcon = this.createEyeIcon(isHidden);
     const title = isHidden ? 'Show solutions' : 'Hide solutions';
-    return `<div style="position: sticky; top: 0; background: #374151; z-index: 10; padding-top: 12px; padding-bottom: 4px;">
+    return `<div style="position: sticky; top: 0; background: ${colors.background}; z-index: 10; padding-top: 12px; padding-bottom: 4px;">
       <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-        <span style="font-size: 16px; font-weight: bold;">Utility Man</span>
-        <span style="font-size: 10px; color: #9CA3AF;">v1.0</span>
+        <span style="font-size: 16px; font-weight: bold; color: ${colors.text};">Utility Man</span>
+        <span style="font-size: 10px; color: ${colors.textSecondary};">v1.1.0</span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <button class="grid-toggle-btn" style="background: none; border: none; color: white; cursor: pointer; padding: 2px; display: flex; align-items: center;" title="${title}">${eyeIcon}</button>
-          <span class="grid-label">"${rightText}"</span>
+          <button class="grid-toggle-btn" style="background: none; border: none; color: ${colors.text}; cursor: pointer; padding: 2px; display: flex; align-items: center;" title="${title}">${eyeIcon}</button>
+          <span class="grid-label" style="color: ${colors.text};">"${rightText}"</span>
         </div>
-        ${!isHidden ? `<span>${resultCount}</span>` : ''}
+        ${!isHidden ? `<span style="color: ${colors.text};">${resultCount}</span>` : ''}
       </div>
     </div>`;
   },
@@ -58,15 +59,17 @@ window.GridSolverUI = {
    * Creates the hidden state content
    */
   createHiddenContent(label) {
+    const colors = GridSolverTheme.getColors();
     return this.createHeader('Utility Man', label, { showToggle: true, isHidden: true }) + 
-      `<div style="text-align: center; padding-top: 10px; padding-bottom: 0px; color: #9CA3AF;">Solutions hidden - click eye to reveal</div>`;
+      `<div style="text-align: center; padding-top: 10px; padding-bottom: 0px; color: ${colors.textSecondary};">Solutions hidden - click eye to reveal</div>`;
   },
 
   /**
    * Creates a copy button for player names
    */
   createCopyButton(playerName) {
-    return `<button class="grid-copy-btn" data-player-name="${playerName}" style="width: 75%; height: 75%; background: #6B7280; border: 1px solid #9CA3AF; color: white; cursor: pointer; font-size: 10px;"></button>`;
+    const colors = GridSolverTheme.getColors();
+    return `<button class="grid-copy-btn" data-player-name="${playerName}" style="width: 75%; height: 75%; background: ${colors.button}; border: 1px solid ${colors.textSecondary}; color: ${colors.text}; cursor: pointer; font-size: 10px;"></button>`;
   },
 
   /**
@@ -74,14 +77,16 @@ window.GridSolverUI = {
    */
   createBBRefLink(bbrefId) {
     if (!bbrefId) return '';
-    return `<a href="https://www.baseball-reference.com/players/${bbrefId[0]}/${bbrefId}.shtml" target="_blank" style="color: #60A5FA; cursor: pointer; text-decoration: none;">🔗</a>`;
+    const colors = GridSolverTheme.getColors();
+    return `<a href="https://www.baseball-reference.com/players/${bbrefId[0]}/${bbrefId}.shtml" target="_blank" style="color: ${colors.accent}; cursor: pointer; text-decoration: none;">🔗</a>`;
   },
 
   /**
    * Creates the table header row
    */
   createTableHeader() {
-    return `<div style="color: #9CA3AF; margin-bottom: 8px; display: flex;">
+    const colors = GridSolverTheme.getColors();
+    return `<div style="color: ${colors.textSecondary}; margin-bottom: 8px; display: flex;">
       <span style="width: 3%;"></span>
       <span style="width: 32%;">Player</span>
       <span style="width: 20%;">Pro Career</span>

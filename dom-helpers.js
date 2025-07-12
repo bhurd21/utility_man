@@ -40,11 +40,7 @@ window.GridSolverDOM = {
   createSolutionContainer() {
     const div = document.createElement('div');
     div.className = 'grid-solver-solutions';
-    div.style.cssText = `
-      background: #374151; color: white; padding-left: 12px; padding-right: 12px; padding-bottom: 12px; padding-top: 0px; margin: 0;
-      font: 11px/1.2 ui-monospace, monospace;
-      max-height: 175px; overflow: auto; border-top: 1px solid #1f2937;
-    `;
+    div.style.cssText = GridSolverTheme.getSolutionContainerStyles();
     return div;
   },
 

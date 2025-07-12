@@ -4,10 +4,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const statusText = document.getElementById('statusText');
   const indicator = document.getElementById('indicator');
   const hideByDefaultToggle = document.getElementById('hideByDefault');
+  const themeRadios = document.querySelectorAll('input[name="theme"]');
 
   // Check initial status and load preferences
   checkExtensionStatus();
   loadPreferences();
+  initializeTheme();
 
   refreshBtn.addEventListener('click', function() {
     statusText.textContent = 'Refreshing...';
@@ -65,9 +67,91 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // Initialize theme system for popup
+  function initializeTheme() {
+    // Detect system preference
+    const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    
+    // Load user preference and apply theme
+    chrome.storage.local.get(['themeMode'], function(result) {
+      const themeMode = result.themeMode || 'system';
+      applyPopupTheme(themeMode, systemPreference);
+    });
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      chrome.storage.local.get(['themeMode'], function(result) {
+        const themeMode = result.themeMode || 'system';
+        if (themeMode === 'system') {
+          applyPopupTheme('system', e.matches ? 'dark' : 'light');
+        }
+      });
+    });
+  }
+
+  // Apply theme to popup
+  function applyPopupTheme(mode, systemPreference) {
+    let actualTheme;
+    
+    switch (mode) {
+      case 'dark':
+        actualTheme = 'dark';
+        break;
+      case 'light':
+        actualTheme = 'light';
+        break;
+      case 'system':
+      default:
+        actualTheme = systemPreference;
+        break;
+    }
+
+    // Apply theme to document
+    if (actualTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }
+
+  // Handle theme changes
+  themeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      if (this.checked) {
+        const themeMode = this.value;
+        const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        
+        // Apply theme immediately to popup
+        applyPopupTheme(themeMode, systemPreference);
+        
+        chrome.storage.local.set({ themeMode }, function() {
+          // Notify content script of theme change
+          chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs[0] && tabs[0].url && tabs[0].url.includes('immaculategrid.com')) {
+              chrome.tabs.sendMessage(tabs[0].id, { 
+                action: 'updateTheme',
+                themeMode: themeMode
+              });
+            }
+          });
+        });
+      }
+    });
+  });
+
   function loadPreferences() {
-    chrome.storage.local.get(['hideByDefault'], function(result) {
+    chrome.storage.local.get(['hideByDefault', 'themeMode'], function(result) {
       hideByDefaultToggle.checked = result.hideByDefault || false;
+      
+      const themeMode = result.themeMode || 'system';
+      const selectedTheme = document.getElementById('theme' + themeMode.charAt(0).toUpperCase() + themeMode.slice(1));
+      if (selectedTheme) {
+        selectedTheme.checked = true;
+      }
+      
+      // Apply theme to popup
+      const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      applyPopupTheme(themeMode, systemPreference);
     });
   }
 

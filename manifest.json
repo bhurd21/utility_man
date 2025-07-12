@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Utility Man",
-  "version": "1.0",
+  "version": "1.1.0",
   "icons": {
     "128": "icon128.png"
   },
@@ -21,6 +21,7 @@
     {
       "matches": ["https://www.immaculategrid.com/*"],
       "js": [
+        "theme-manager.js",
         "dom-helpers.js",
         "ui-components.js", 
         "content-formatter.js",

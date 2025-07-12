@@ -25,6 +25,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     hideByDefault = request.hideByDefault;
     sendResponse({ success: true });
     return true;
+  } else if (request.action === 'updateTheme') {
+    GridSolverTheme.applyTheme(request.themeMode);
+    sendResponse({ success: true });
+    return true;
   }
 });
 
@@ -32,6 +36,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  * Initialize the extension
  */
 function init() {
+  GridSolverTheme.init();
   setupEventListeners();
   setupUrlChangeDetection();
   loadUserPreferences();
@@ -144,7 +149,7 @@ function handleCopyPlayer(event) {
   
   setTimeout(() => {
     button.textContent = originalContent;
-    button.style.backgroundColor = '#6B7280';
+    button.style.backgroundColor = GridSolverTheme.getColors().button;
   }, 1000);
 }
 

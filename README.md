@@ -8,6 +8,7 @@ A Chrome extension that automatically provides solutions for Immaculate Grid puz
 - **Non-Intrusive Integration**: Solutions appear contextually within search dialogs using the site's existing UI
 - **Historical Puzzle Support**: Works with current and past puzzles (grid-{number} URLs)
 - **Configurable**: Hide/show toggle with persistent user preferences
+- **Theme Support**: System, light, and dark mode options
 - **Real-time Updates**: Automatically refreshes solutions when navigating between puzzles
 - **Baseball Reference Integration**: Direct links to player profiles and statistics
 
