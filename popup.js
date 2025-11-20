@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Send message to content script to refresh solutions
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      if (tabs[0] && tabs[0].url && tabs[0].url.includes('immaculategrid.com')) {
+      if (tabs[0] && tabs[0].url && tabs[0].url.includes('sports-reference.com/immaculate-grid')) {
         chrome.tabs.sendMessage(tabs[0].id, { 
           action: 'solve'
         }, function(response) {
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.local.set({ hideByDefault }, function() {
       // Notify content script of preference change
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0] && tabs[0].url && tabs[0].url.includes('immaculategrid.com')) {
+        if (tabs[0] && tabs[0].url && tabs[0].url.includes('sports-reference.com/immaculate-grid')) {
           chrome.tabs.sendMessage(tabs[0].id, { 
             action: 'updatePreference',
             hideByDefault: hideByDefault
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.storage.local.set({ themeMode }, function() {
           // Notify content script of theme change
           chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (tabs[0] && tabs[0].url && tabs[0].url.includes('immaculategrid.com')) {
+            if (tabs[0] && tabs[0].url && tabs[0].url.includes('sports-reference.com/immaculate-grid')) {
               chrome.tabs.sendMessage(tabs[0].id, { 
                 action: 'updateTheme',
                 themeMode: themeMode
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function checkExtensionStatus() {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      if (tabs[0] && tabs[0].url && tabs[0].url.includes('immaculategrid.com')) {
+      if (tabs[0] && tabs[0].url && tabs[0].url.includes('sports-reference.com/immaculate-grid')) {
         // On the correct site
         statusText.textContent = 'Ready';
         indicator.className = 'status-indicator ready';
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshBtn.disabled = false;
         refreshBtn.textContent = 'immaculategrid.com';
         refreshBtn.onclick = function() {
-          chrome.tabs.create({ url: 'https://immaculategrid.com' });
+          chrome.tabs.create({ url: 'https://sports-reference.com/immaculate-grid' });
         };
       }
     });

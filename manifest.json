@@ -5,13 +5,10 @@
   "icons": {
     "128": "icon128.png"
   },
-  "description": "Provides solutions for immaculategrid.com puzzles using Sean Lahman's baseball database.",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
+  "description": "Provides solutions for sports-reference.com/immaculate-grid puzzles using Sean Lahman's baseball database.",
+  "permissions": ["activeTab", "storage"],
   "host_permissions": [
-    "https://www.immaculategrid.com/*",
+    "https://www.sports-reference.com/immaculate-grid/*",
     "https://brennanhurd.com/api/*"
   ],
   "background": {
@@ -19,11 +16,11 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.immaculategrid.com/*"],
+      "matches": ["https://www.sports-reference.com/immaculate-grid/*"],
       "js": [
         "theme-manager.js",
         "dom-helpers.js",
-        "ui-components.js", 
+        "ui-components.js",
         "content-formatter.js",
         "content.js"
       ],

@@ -4,7 +4,7 @@ A Chrome extension that automatically provides solutions for Immaculate Grid puz
 
 ## Features
 
-- **Automatic Detection**: Instantly scans and provides solutions when visiting immaculategrid.com
+- **Automatic Detection**: Instantly scans and provides solutions when visiting sports-reference.com/immaculate-grid
 - **Non-Intrusive Integration**: Solutions appear contextually within search dialogs using the site's existing UI
 - **Historical Puzzle Support**: Works with current and past puzzles (grid-{number} URLs)
 - **Configurable**: Hide/show toggle with persistent user preferences
@@ -14,7 +14,7 @@ A Chrome extension that automatically provides solutions for Immaculate Grid puz
 
 ## How It Works
 
-1. Visit immaculategrid.com - extension automatically activates
+1. Visit sports-reference.com/immaculate-grid - extension automatically activates
 2. Click any grid cell to open the search dialog
 3. Solutions appear formatted as a table with player names, ages, and stats
 4. Toggle visibility with the eye icon or configure default behavior in the popup
@@ -25,7 +25,7 @@ A Chrome extension that automatically provides solutions for Immaculate Grid puz
 - **Database**: Sean Lahman's Baseball Database (1871-2023)
 - **API**: Queries local server at brennanhurd.com/api/imgrid
 - **Architecture**: Modular Chrome Manifest V3 extension with clean separation of concerns
-- **Permissions**: activeTab, storage, and host permissions for immaculategrid.com
+- **Permissions**: activeTab, storage, and host permissions for sports-reference.com/immaculate-grid
 
 ## Local Installation
 
@@ -36,5 +36,5 @@ A Chrome extension that automatically provides solutions for Immaculate Grid puz
 
 ## Links
 
-- [Immaculate Grid](https://www.immaculategrid.com)
+- [Immaculate Grid](https://www.sports-reference.com/immaculate-grid)
 - [Sean Lahman's Baseball Database](http://seanlahman.com)

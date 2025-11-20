@@ -3,7 +3,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   // Trigger on both complete page loads and URL changes
   if ((changeInfo.status === 'complete' || changeInfo.url) && 
       tab.url && 
-      tab.url.includes('immaculategrid.com')) {
+      tab.url.includes('sports-reference.com/immaculate-grid')) {
     
     // Send message to content script to start scanning
     chrome.tabs.sendMessage(tabId, { action: 'autoSolve' }).catch(() => {

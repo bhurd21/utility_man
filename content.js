@@ -250,7 +250,7 @@ function setupUrlChangeDetection() {
 function handleUrlChange() {
   const newUrl = window.location.href;
   if (newUrl !== currentUrl && 
-      (newUrl.includes('/grid-') || newUrl.endsWith('immaculategrid.com/') || newUrl.endsWith('immaculategrid.com'))) {
+      (newUrl.includes('/grid-') || newUrl.endsWith('sports-reference.com/immaculate-grid/') || newUrl.endsWith('sports-reference.com/immaculate-grid'))) {
     currentUrl = newUrl;
     gridSolutions = {};
     loadSolutions();
