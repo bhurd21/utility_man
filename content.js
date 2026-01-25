@@ -62,7 +62,7 @@ async function loadSolutions() {
       return true;
     }
     
-    const response = await fetch(`https://brennanhurd.com/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
+    const response = await fetch(`https://brennanhurdgmail.com/api/imgrid?questions=${encodeURIComponent(JSON.stringify(labels))}`);
     const data = await response.json();
     
     // Store solutions

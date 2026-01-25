@@ -28,7 +28,7 @@ window.GridSolverUI = {
       return `<div style="position: sticky; top: 0; background: ${colors.background}; z-index: 10; padding-top: 12px; padding-bottom: 4px;">
         <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
           <span style="font-size: 16px; font-weight: bold; color: ${colors.text};">Utility Man</span>
-          <span style="font-size: 10px; color: ${colors.textSecondary};">v1.1.1</span>
+          <span style="font-size: 10px; color: ${colors.textSecondary};">v1.1.2</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: ${colors.text};">
           <span class="grid-label">"${rightText}"</span>
@@ -43,7 +43,7 @@ window.GridSolverUI = {
     return `<div style="position: sticky; top: 0; background: ${colors.background}; z-index: 10; padding-top: 12px; padding-bottom: 4px;">
       <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
         <span style="font-size: 16px; font-weight: bold; color: ${colors.text};">Utility Man</span>
-        <span style="font-size: 10px; color: ${colors.textSecondary};">v1.1.1</span>
+        <span style="font-size: 10px; color: ${colors.textSecondary};">v1.1.2</span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">

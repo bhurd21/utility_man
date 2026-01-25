@@ -93,7 +93,7 @@ window.GridSolverFormatter = {
       <div style="color: ${colors.textSecondary}; margin-bottom: 8px; line-height: 1.4;">
         This cell is in the 2% of all cells that are currently unsolvable.
       </div>
-      <a href="https://brennanhurd.com/utility_man/unsolvable_cell_notice" target="_blank" style="color: ${colors.accent}; text-decoration: none; font-size: 11px;">
+      <a href="https://brennanhurdgmail.com/utility_man/unsolvable_cell_notice" target="_blank" style="color: ${colors.accent}; text-decoration: none; font-size: 11px;">
         Click here to learn more →
       </a>
     </div>`;

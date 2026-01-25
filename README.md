@@ -23,7 +23,7 @@ A Chrome extension that automatically provides solutions for Immaculate Grid puz
 ## Technical Details
 
 - **Database**: Sean Lahman's Baseball Database (1871-2023)
-- **API**: Queries local server at brennanhurd.com/api/imgrid
+- **API**: Queries local server at brennanhurdgmail.com/api/imgrid
 - **Architecture**: Modular Chrome Manifest V3 extension with clean separation of concerns
 - **Permissions**: activeTab, storage, and host permissions for sports-reference.com/immaculate-grid
 
